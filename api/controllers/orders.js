@@ -2,34 +2,32 @@ const Order = require('../models/order');
 const Product = require('../models/product');
 const mongoose = require('mongoose');//for mogodb
 
-exports.orders_get_all = (req, res, next) => {
-    Order.find()
-    .select('product quantity _id')
-    .populate('product', 'name')
-    .exec()
-    .then(docs => {
-        res.status(200).json({
+exports.orders_get_all = async (req, res, next) => {
+    try {
+        const docs = await Order.find()
+            .select('product quantity _id')
+            .populate('product', 'name')
+            .exec();
+
+        const response = {
             count: docs.length,
-            orders: docs.map(doc =>{
-                return{
-                    _id: doc._id,
-                    product: doc.product,
-                    quantity: doc.quantity,
-                    request:{
-                        type: 'GET',
-                        url: 'http://localhost:3000/orders/' + doc._id
-                    }
+            orders: docs.map(doc => ({
+                _id: doc._id,
+                product: doc.product,
+                quantity: doc.quantity,
+                request: {
+                    type: 'GET',
+                    url: 'http://localhost:3000/orders/' + doc._id
                 }
-            })
-            
-        });
-    })
-    .catch(err => {
+            }))
+        };
+
+        res.status(200).json(response);
+    } catch (err) {
         console.log(err);
-        res.status(500).json({error: err})
-    });
-   
-}
+        res.status(500).json({ error: err });
+    }
+};
 
 
 exports.orders_create_order = (req, res, next) => {
